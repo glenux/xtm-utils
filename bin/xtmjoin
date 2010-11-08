@@ -16,7 +16,7 @@ class XtmJoin
 
 	def initialize args
 		@args = []
-		@input_xtm = nil
+		@input_filename = nil
 		parse_command_line args	
 	end
 
@@ -29,7 +29,7 @@ class XtmJoin
 			opts.separator "Mandatory options"
 
 			opts.on("-i", "--input FILE", "Input XTM file") do |r|
-				@input_xtm = r
+				@input_filename = r
 			end
 
 			opts.separator ""
@@ -48,7 +48,11 @@ class XtmJoin
 	def validate!
 		@opts.parse!
 
-		raise XtmJoinArgumentError, "No input XTM file specified!" if @input_xtm.nil?
+		raise XtmJoinArgumentError, "No input XTM file specified!" if @input_filename.nil?
+
+		raise RuntimeError, "Current input XTM does not exist!" unless File.exist? @input_filename 
+		raise RuntimeError, "Current input XTML is not a file!" unless File.file? @input_filename
+		@input_filename = File.expand_path @input_filename
 	end
 
 
@@ -58,22 +62,49 @@ class XtmJoin
 		output_file = nil
 		# initial file
 
-		in_xtm = File.open( @input_xtm, "rb" )
+		in_xtm = File.open @input_filename, "rb"
 		header = XtmHeader::read in_xtm
 
 		output_file = header.filename_str
-
 		puts "Writing data to %s" % output_file
 
 		# FIXME: prevent overwriting
-		out_xtm = File.open( output_file, "wb" )
+		out_xtm = File.open output_file, "wb"
 
-		while not in_xtm.eof?
-			buffer = in_xtm.read 1024
-			out_xtm.write buffer
+		cur_xtm = @input_filename
+		is_first = true
+		cur_size = header.filesize
+		while cur_size > 0 do
+			unless is_first then
+				cur_xtm = _nextfile cur_xtm
+				puts "Opening %s" % cur_xtm
+				in_xtm = File.open cur_xtm, "rb"
+			end
+			while cur_size > 0 and (not in_xtm.eof?) do
+				puts "Remaining : %s bytes" % cur_size 
+				buffer = in_xtm.read cur_size
+				cur_size = cur_size - buffer.length
+				out_xtm.write buffer.slice(0, buffer.length)
+			end
+			is_first = false
+			in_xtm.close
 		end
+		out_xtm.close
 
 		# remaining files
+	end
+
+	def _nextfile curfile
+		cur_idx = 0
+		cur_len = 0
+		if curfile =~ /\.([0-9]+)\.xtm$/ then
+			cur_idx = $1.to_i
+			cur_len = $1.length
+		end
+		next_idx = cur_idx + 1
+
+		nf = curfile.gsub(/\.([0-9]+)\.xtm$/, ".%0#{cur_len}d.xtm" % next_idx)
+		return nf
 	end
 
 	def self.main args
