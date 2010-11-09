@@ -1,84 +1,82 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 
 require 'optparse'
+require 'xtmfile/header'
 
-require 'rubygems'
-require 'bindata'
+module XtmFile
+	class XtmInfo
+		class XtmInfoArgumentError < ArgumentError ; end
 
-require 'xtmfile/xtmheader'
-
-
-class XtmInfo
-	class XtmInfoArgumentError < ArgumentError ; end
-
-	attr_reader :opts
+		attr_reader :opts
 
 
-	def initialize args
-		@args = []
-		@input_xtm = nil
-		parse_command_line args	
-	end
-
-	def parse_command_line args
-		@args = args.clone
-		@opts = OptionParser.new do |opts|
-			opts.banner = "Usage: #{File.basename $0} [options]\n"
-
-			opts.separator ""
-			opts.separator "Mandatory options"
-
-			opts.on("-i", "--input FILE", "Input XTM file") do |r|
-				@input_xtm = r
-			end
-
-			opts.separator ""
-			opts.separator "General options:"
-
-			opts.on("-h", "--help", "Show this help") do |h|
-				@help = h
-			end
-			opts.on("-v", "--verbose", "Show warnings too") do |v|
-				@verbose = v
-			end
-			opts.separator ""
+		def initialize args
+			@args = []
+			@input_xtm = nil
+			parse_command_line args	
 		end
-	end
 
-	def validate!
-		@opts.parse!
+		def parse_command_line args
+			@args = args.clone
+			@opts = OptionParser.new do |opts|
+				opts.banner = "Usage: #{File.basename $0} [options]\n"
 
-		raise XtmInfoArgumentError, "No input XTM file specified!" if @input_xtm.nil?
-	end
+				opts.separator ""
+				opts.separator "Mandatory options"
 
+				opts.on("-i", "--input FILE", "Input XTM file") do |r|
+					@input_xtm = r
+				end
 
-	def run
-		validate!
+				opts.separator ""
+				opts.separator "General options:"
 
-		File.open( @input_xtm, "rb" ) do |io|
-			header = XtmHeader::read io
-			puts header
+				opts.on("-h", "--help", "Show this help") do |h|
+					@help = h
+				end
+				opts.on("-v", "--verbose", "Show warnings too") do |v|
+					@verbose = v
+				end
+				opts.separator ""
+			end
 		end
-	end
 
-	def self.main args
-		xj = nil
-		begin
-			xj = XtmInfo.new args
-			xj.run
-			exit 0
-		rescue XtmInfoArgumentError => e
-			STDERR.puts "%s" % xj.opts
-			STDERR.puts "error: %s" % e.message
+		def validate!
+			@opts.parse!
 
-			exit 1
-		rescue SystemExit => e
-			raise e
-		rescue Exception => e
-			STDERR.puts "error: %s" % e.message
-			exit 1
+			raise XtmInfoArgumentError, "No input XTM file specified!" if @input_xtm.nil?
+		end
+
+
+		def run
+			validate!
+
+			File.open( @input_xtm, "rb" ) do |io|
+				header = Header::read io
+				puts header.to_summary_string
+			end
+		end
+
+		def self.main args
+			xj = nil
+			begin
+				xj = XtmInfo.new args
+				xj.run
+				exit 0
+			rescue XtmInfoArgumentError => e
+				STDERR.puts "%s" % xj.opts
+				STDERR.puts "error: %s" % e.message
+
+				exit 1
+			rescue SystemExit => e
+				raise e
+			rescue Exception => e
+				STDERR.puts "error: %s" % e.message
+				STDERR.puts e.backtrace
+				exit 1
+			end
 		end
 	end
 end
 
-XtmInfo.main ARGV
+XtmFile::XtmInfo.main ARGV
