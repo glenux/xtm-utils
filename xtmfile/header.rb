@@ -57,6 +57,7 @@ class Header < BinData::Record
 		return r.join("\n")
 	end
 
+
 	def to_summary_string
 		r = []
 		r << "    Software : %s (%s)" % [self.progname_str,self.version_str]
@@ -64,7 +65,24 @@ class Header < BinData::Record
 		r << "Filename str : %s" % self.filename_str
 		r << "         md5 : %s" % ( self.md5 ? 'enabled' : 'disabled' )
 		r << "   Filecount : %d" % self.filecount
-		r << "    Filesize : %s" % self.filesize
+		r << "    Filesize : %s" % _readable_file_size( self.filesize, 2 )
 		return r.join("\n")
 	end
+
+	private
+
+	GIGA_SIZE = 1073741824.0
+	MEGA_SIZE = 1048576.0
+	KILO_SIZE = 1024.0
+	def _readable_file_size size, precision
+
+		case
+		when size == 1 : "1 Byte"
+		when size < KILO_SIZE : "%d Bytes" % size
+		when size < MEGA_SIZE : "%.#{precision}f KB" % (size / KILO_SIZE)
+		when size < GIGA_SIZE : "%.#{precision}f MB" % (size / MEGA_SIZE)
+		else "%.#{precision}f GB" % (size / GIGA_SIZE)
+		end
+	end
+
 end
