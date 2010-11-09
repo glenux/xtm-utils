@@ -26,8 +26,8 @@ class XtmHeader < BinData::Record
 	uint32le :date
 
 	uint8 :filename_len
-	stringz :filename_str, :length => 50
-	string :filename_str_pad, :length => lambda { 50 - filename_len - 1 }
+	string :filename_str, :read_length => :filename_len
+	string :filename_str_pad, :read_length => lambda { 50 - filename_len }
 
 	uint8 :md5
 
