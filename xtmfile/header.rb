@@ -3,6 +3,7 @@ require 'rubygems'
 gem 'bindata', '~> 1.2.1'
 require 'bindata'
 
+# FIXME: set default values for header fields
 module XtmFile
 
 	#
