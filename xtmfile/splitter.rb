@@ -1,19 +1,29 @@
+
+require 'xtmfile/header'
+
 module XtmFile
-class Splitter
-attr_reader :parts, :parts_size
-def initialize input_filename
-@input_filename = input_filename
-@parts = 0
-@parts_size = 0
-end
+	class Splitter
+		attr_reader :parts, :parts_size
+		def initialize input_filename
+			@input_filename = input_filename
 
-def parts= count
-end
+			# create and initialize header
+			@header = Header.new
+			@header.filename_str = @input_filename
+		end
 
-def parts_size= size
-end
+		def parts= count
+			@header.filecount = count
+		end
 
-def start
-end
-end
+		def parts_size= size
+			count = @header.filesize / size
+			remain = @header.filesize % size
+			count += 1 if remain > 0
+			@header.filecount = count
+		end
+
+		def start
+		end
+	end
 end
