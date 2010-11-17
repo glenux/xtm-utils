@@ -3,7 +3,7 @@ require 'xtmfile/header'
 
 module XtmFile
 	class Splitter
-		attr_reader :parts, :parts_size
+		attr_reader :parts_size
 		def initialize input_filename
 			@input_filename = input_filename
 
@@ -14,6 +14,7 @@ module XtmFile
 
 		def parts= count
 			@header.filecount = count
+			@parts_size = @header.filesize / count
 		end
 
 		def parts_size= size
